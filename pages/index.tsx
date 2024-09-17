@@ -1,107 +1,30 @@
-// pages/index.tsx
-import { useEffect, useRef, useState } from 'react';
-import { Box, Button, Container, ScrollArea, Stack, Text, TextInput } from '@mantine/core';
-import { Base64AudioPlayer } from './classes/Base64AudioPlayer';
+import Head from 'next/head';
+import { Container } from '@mantine/core';
+import Chatbot from '@/components/Chatbot';
+import Tutorial from '../components/tutorial.mdx';
 
 const Home = () => {
-  const [messages, setMessages] = useState<{ content: string; role: string }[]>([]);
-  const [input, setInput] = useState('');
-  const scrollRef = useRef<HTMLDivElement>(null);
-  const [eventSource, setEventSource] = useState<EventSource | null>(null);
-  const audioPlayerRef = useRef<Base64AudioPlayer | null>(null);
-
-  useEffect(() => {
-    // Initialize the audio player
-    audioPlayerRef.current = new Base64AudioPlayer((state) => {
-      // Handle audio chunk changes if needed
-    });
-
-    // Clean up the audio player when the component unmounts
-    return () => {
-      audioPlayerRef.current?.stopAndFlush();
-    };
-  }, []);
-
-  // Handle sending a message
-  const handleSend = () => {
-    // Stop any ongoing audio and flush the queue
-    audioPlayerRef.current?.stopAndFlush();
-    
-    const newMessages = [...messages, { content: input, role: 'user' }];
-    setMessages(newMessages);
-
-    const urlEncodedMessages = encodeURIComponent(JSON.stringify(newMessages));
-
-    if (eventSource) {
-      eventSource.close(); // Close the previous EventSource if it exists
-    }
-
-    const url = `/api/chat?messages=${urlEncodedMessages}`;
-    setEventSource(new EventSource(url));
-  };
-
-  // Handle incoming messages from SSE
-  useEffect(() => {
-    if (eventSource) {
-      eventSource.onmessage = (event) => {
-        try {
-          const data = JSON.parse(event.data);
-          if (data.text) {
-            setMessages((prevMessages) => {
-              if (prevMessages[prevMessages.length - 1]?.role === 'assistant') {
-                return [
-                  ...prevMessages.slice(0, -1),
-                  { content: prevMessages[prevMessages.length - 1].content + data.text, role: 'assistant' },
-                ];
-              } else {
-                return [...prevMessages, { content: data.text, role: 'assistant' }];
-              }
-            });
-          } else if (data.audio) {
-            audioPlayerRef.current?.addChunk(data);
-          }
-        } catch (error) {
-          console.error('Failed to parse SSE message:', error);
-        }
-      };
-
-      eventSource.onerror = (error) => {
-        console.error('EventSource error:', error, event);
-        eventSource.close();
-      };
-
-      return () => {
-        eventSource.close();
-      };
-    }
-  }, [eventSource]);
-
-  useEffect(() => {
-    scrollRef.current?.scrollIntoView({ behavior: 'smooth' });
-  }, [messages]);
-
   return (
-    <Container>
-      <ScrollArea style={{ height: 400, overflowY: 'auto' }}>
-        <Stack spacing="sm">
-          {messages.map((msg, index) => (
-            <Box key={index} align={msg.role === 'user' ? 'right' : 'left'}>
-              <Text color={msg.role === 'user' ? 'blue' : 'green'}>{msg.content}</Text>
-            </Box>
-          ))}
-          <div ref={scrollRef} />
-        </Stack>
-      </ScrollArea>
-      <Box mt="md" style={{ display: 'flex', gap: '0.5rem' }}>
-        <TextInput
-          value={input}
-          onChange={(e) => setInput(e.currentTarget.value)}
-          placeholder="Type your message"
-          style={{ flexGrow: 1 }}
-        />
-        <Button onClick={handleSend}>Send</Button>
-      </Box>
-    </Container>
+    <>
+      <Head>
+        <title>Build a realtime voice chatbot with any voice</title>
+        <meta name="description" content="This is a description of my awesome page." />
+        <meta property="og:title" content="My Awesome Page" />
+        <meta property="og:description" content="This is a description of my awesome page." />
+        <meta property="og:image" content="https://example.com/preview-image.jpg" />
+        <meta property="og:url" content="https://example.com/page-url" />
+        <meta name="twitter:card" content="summary_large_image" />
+        <meta name="twitter:title" content="My Awesome Page" />
+        <meta name="twitter:description" content="This is a description of my awesome page." />
+        <meta name="twitter:image" content="https://example.com/preview-image.jpg" />
+      </Head>
+      <main>
+        <Container>
+          <Chatbot />
+          <Tutorial />
+        </Container>
+      </main>
+    </>
   );
 };
 
