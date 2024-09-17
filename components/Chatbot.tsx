@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
-import { Box, Button, ScrollArea, Stack, Text, TextInput } from '@mantine/core';
+import { Box, Button, Container, Card, ScrollArea, Stack, Text, TextInput, useMantineTheme } from '@mantine/core';
 import { Base64AudioPlayer } from '../pages/classes/Base64AudioPlayer';
 
 const Chatbot = () => {
@@ -8,6 +8,7 @@ const Chatbot = () => {
   const scrollRef = useRef<HTMLDivElement>(null);
   const [eventSource, setEventSource] = useState<EventSource | null>(null);
   const audioPlayerRef = useRef<Base64AudioPlayer | null>(null);
+  const theme = useMantineTheme();
 
   useEffect(() => {
     audioPlayerRef.current = new Base64AudioPlayer((state) => {});
@@ -30,6 +31,7 @@ const Chatbot = () => {
 
     const url = `/api/chat?messages=${urlEncodedMessages}`;
     setEventSource(new EventSource(url));
+    setInput('');
   };
 
   useEffect(() => {
@@ -60,7 +62,7 @@ const Chatbot = () => {
       };
 
       eventSource.onerror = (error) => {
-        console.error('EventSource error:', error, event);
+        console.error('EventSource error:', error);
         eventSource.close();
       };
 
@@ -75,27 +77,59 @@ const Chatbot = () => {
   }, [messages]);
 
   return (
-    <>
-      <ScrollArea style={{ height: "100%", overflowY: 'auto' }}>
-        <Stack spacing="sm">
+    <Container
+      style={{
+        height: '100%',
+        maxHeight: '50%',
+        overflow:'hidden',
+        display: 'flex',
+        flexDirection: 'column',
+        borderRadius: theme.radius.md,
+        backgroundColor: theme.colors.gray[0],
+      }}
+    >
+      <ScrollArea style={{ flex: 1, padding: theme.spacing.md, overflow:'auto' }}>
+        <Text align="center" weight={700} style={{ fontSize: '1.5rem', marginBottom: theme.spacing.md }}>
+          Demo
+        </Text>
+        <Stack spacing="md">
           {messages.map((msg, index) => (
-            <Box key={index} align={msg.role === 'user' ? 'right' : 'left'}>
-              <Text color={msg.role === 'user' ? 'blue' : 'green'}>{msg.content}</Text>
-            </Box>
+            <Card
+              key={index}
+              shadow="sm"
+              padding="sm"
+              radius="md"
+              style={{
+                alignSelf: msg.role === 'user' ? 'flex-end' : 'flex-start',
+                backgroundColor: msg.role === 'user' ? theme.colors.blue[0] : theme.colors.teal[0],
+                maxWidth: '80%',
+              }}
+            >
+              <Text color={msg.role === 'user' ? theme.colors.blue[7] : theme.colors.teal[7]}>
+                {msg.content}
+              </Text>
+            </Card>
           ))}
           <div ref={scrollRef} />
         </Stack>
       </ScrollArea>
-      <Box mt="md" style={{ display: 'flex', gap: '0.5rem' }}>
+      <Box mt="md" style={{ display: 'flex', gap: theme.spacing.sm, padding: theme.spacing.sm,  }}>
         <TextInput
           value={input}
           onChange={(e) => setInput(e.currentTarget.value)}
           placeholder="Type your message"
           style={{ flexGrow: 1 }}
+          onKeyUp={(e) => {
+            if (e.key === 'Enter') {
+              handleSend();
+            }
+          }}
         />
-        <Button onClick={handleSend}>Send</Button>
+        <Button onClick={handleSend}>
+          Send
+        </Button>
       </Box>
-    </>
+    </Container>
   );
 };
 
