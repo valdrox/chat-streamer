@@ -1,31 +1,39 @@
+// pages/index.tsx
 import { useEffect, useRef, useState } from 'react';
 import { Box, Button, Container, ScrollArea, Stack, Text, TextInput } from '@mantine/core';
-import useBase64AudioPlayer from './hooks/useBase64AudioPlayer';
-
+import { Base64AudioPlayer } from './classes/Base64AudioPlayer';
 
 const Home = () => {
   const [messages, setMessages] = useState<{ content: string; role: string }[]>([]);
   const [input, setInput] = useState('');
   const scrollRef = useRef<HTMLDivElement>(null);
   const [eventSource, setEventSource] = useState<EventSource | null>(null);
-  const { addChunk, stopAndFlush } = useBase64AudioPlayer((state) => {
-    console.log('Audio player state:', state);
-  });
+  const audioPlayerRef = useRef<Base64AudioPlayer | null>(null);
+
+  useEffect(() => {
+    // Initialize the audio player
+    audioPlayerRef.current = new Base64AudioPlayer((state) => {
+      // Handle audio chunk changes if needed
+    });
+
+    // Clean up the audio player when the component unmounts
+    return () => {
+      audioPlayerRef.current?.stopAndFlush();
+    };
+  }, []);
 
   // Handle sending a message
   const handleSend = () => {
-    // add user message to the chat
-    stopAndFlush();
+    // Stop any ongoing audio and flush the queue
+    audioPlayerRef.current?.stopAndFlush();
     
     const newMessages = [...messages, { content: input, role: 'user' }];
     setMessages(newMessages);
 
-    // URL encode the messages array
     const urlEncodedMessages = encodeURIComponent(JSON.stringify(newMessages));
 
     if (eventSource) {
-      // Close the previous event source if it exists
-      eventSource.close();
+      eventSource.close(); // Close the previous EventSource if it exists
     }
 
     const url = `/api/chat?messages=${urlEncodedMessages}`;
@@ -37,27 +45,20 @@ const Home = () => {
     if (eventSource) {
       eventSource.onmessage = (event) => {
         try {
-          const data = JSON.parse(event.data);          
+          const data = JSON.parse(event.data);
           if (data.text) {
             setMessages((prevMessages) => {
               if (prevMessages[prevMessages.length - 1]?.role === 'assistant') {
-                // Append the last assistant message with the new text
                 return [
                   ...prevMessages.slice(0, -1),
                   { content: prevMessages[prevMessages.length - 1].content + data.text, role: 'assistant' },
                 ];
-              }
-              else {
-                // Add the new text as a assistant message
-                return [
-                  ...prevMessages,
-                  { content: data.text, role: 'assistant' },
-                ];
+              } else {
+                return [...prevMessages, { content: data.text, role: 'assistant' }];
               }
             });
-          }
-          else if (data.audio){
-            addChunk(data);
+          } else if (data.audio) {
+            audioPlayerRef.current?.addChunk(data);
           }
         } catch (error) {
           console.error('Failed to parse SSE message:', error);
@@ -65,12 +66,12 @@ const Home = () => {
       };
 
       eventSource.onerror = (error) => {
-        console.error('EventSource error:', error);
-        eventSource.close(); // Close connection on error
+        console.error('EventSource error:', error, event);
+        eventSource.close();
       };
 
       return () => {
-        eventSource.close(); // Clean up connection on component unmount
+        eventSource.close();
       };
     }
   }, [eventSource]);
