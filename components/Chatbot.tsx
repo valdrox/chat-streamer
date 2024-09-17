@@ -1,5 +1,15 @@
 import { useEffect, useRef, useState } from 'react';
-import { Box, Button, Container, Card, ScrollArea, Stack, Text, TextInput, useMantineTheme } from '@mantine/core';
+import {
+  Box,
+  Button,
+  Card,
+  Container,
+  ScrollArea,
+  Stack,
+  Text,
+  TextInput,
+  useMantineTheme,
+} from '@mantine/core';
 import { Base64AudioPlayer } from '../pages/classes/Base64AudioPlayer';
 
 const Chatbot = () => {
@@ -9,14 +19,21 @@ const Chatbot = () => {
   const [eventSource, setEventSource] = useState<EventSource | null>(null);
   const audioPlayerRef = useRef<Base64AudioPlayer | null>(null);
   const theme = useMantineTheme();
+  const [startIndex, setStartIndex] = useState<number | null>(null);
+  const [endIndex, setEndIndex] = useState<number | null>(null);
 
   useEffect(() => {
-    audioPlayerRef.current = new Base64AudioPlayer((state) => {});
+    audioPlayerRef.current = new Base64AudioPlayer((startIndex, endIndex) => {
+      setStartIndex(startIndex);
+      setEndIndex(endIndex);
+    });
 
     return () => {
       audioPlayerRef.current?.stopAndFlush();
     };
   }, []);
+
+
 
   const handleSend = () => {
     audioPlayerRef.current?.stopAndFlush();
@@ -32,6 +49,8 @@ const Chatbot = () => {
     const url = `/api/chat?messages=${urlEncodedMessages}`;
     setEventSource(new EventSource(url));
     setInput('');
+
+    audioPlayerRef.current?.resumeIfSuspended(); // browser requirement
   };
 
   useEffect(() => {
@@ -81,15 +100,19 @@ const Chatbot = () => {
       style={{
         height: '100%',
         maxHeight: '50%',
-        overflow:'hidden',
+        overflow: 'hidden',
         display: 'flex',
         flexDirection: 'column',
         borderRadius: theme.radius.md,
         backgroundColor: theme.colors.gray[0],
       }}
     >
-      <ScrollArea style={{ flex: 1, padding: theme.spacing.md, overflow:'auto' }}>
-        <Text align="center" weight={700} style={{ fontSize: '1.5rem', marginBottom: theme.spacing.md }}>
+      <ScrollArea style={{ flex: 1, padding: theme.spacing.md, overflow: 'auto' }}>
+        <Text
+          align="center"
+          weight={700}
+          style={{ fontSize: '1.5rem', marginBottom: theme.spacing.md }}
+        >
           Demo
         </Text>
         <Stack spacing="md">
@@ -105,15 +128,26 @@ const Chatbot = () => {
                 maxWidth: '80%',
               }}
             >
-              <Text color={msg.role === 'user' ? theme.colors.blue[7] : theme.colors.teal[7]}>
-                {msg.content}
-              </Text>
+              {index !== messages.length - 1 ? (
+                <Text color={msg.role === 'user' ? theme.colors.blue[7] : theme.colors.teal[7]}>
+                  {msg.content}
+                </Text>
+              ) : (
+                <Text
+                  span
+                  color={msg.role === 'user' ? theme.colors.blue[7] : theme.colors.teal[7]}
+                >
+                  <Text span>{msg.content.slice(0, startIndex)}</Text>
+                  <Text span color={theme.colors.red[7]}>{msg.content.slice(startIndex, endIndex)}</Text>
+                  <Text span>{msg.content.slice(endIndex)}</Text>
+                </Text>
+              )}
             </Card>
           ))}
           <div ref={scrollRef} />
         </Stack>
       </ScrollArea>
-      <Box mt="md" style={{ display: 'flex', gap: theme.spacing.sm, padding: theme.spacing.sm,  }}>
+      <Box mt="md" style={{ display: 'flex', gap: theme.spacing.sm, padding: theme.spacing.sm }}>
         <TextInput
           value={input}
           onChange={(e) => setInput(e.currentTarget.value)}
@@ -125,9 +159,7 @@ const Chatbot = () => {
             }
           }}
         />
-        <Button onClick={handleSend}>
-          Send
-        </Button>
+        <Button onClick={handleSend}>Send</Button>
       </Box>
     </Container>
   );
