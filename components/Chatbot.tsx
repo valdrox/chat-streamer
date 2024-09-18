@@ -126,6 +126,7 @@ const Chatbot = () => {
                 alignSelf: msg.role === 'user' ? 'flex-end' : 'flex-start',
                 backgroundColor: msg.role === 'user' ? theme.colors.blue[0] : theme.colors.teal[0],
                 maxWidth: '80%',
+                whiteSpace: 'pre-wrap'
               }}
             >
               {index !== messages.length - 1 ? (
