@@ -1,6 +1,172 @@
-# Tutorial
+# Build a Chatbot that Speaks Real-Time with Any Voice
 
-Welcome to the tutorial!
+In this tutorial, you'll learn how to build a ChatGPT-like chatbot that not only responds to user queries in real-time but also speaks the responses using a customizable voice. 
+You can even use your voice!
+The chatbot will highlight the words it is currently speaking, providing an immersive and interactive experience. 
+We'll use Next.js with server-sent events (SSE) for low-latency communication, and Mantine for UI components. 
+Buy using server-sent events, we can keep deployment quick and easy deployment, thanks to its serverless architecture.
 
-future content will come here
+Want to see it in action? Jump to [demo](#demo).
 
+## Prerequisites
+
+Before we start, ensure you have the following:
+
+- Node.js installed
+- API keys for OpenAI and ElevenLabs
+- A voice id from ElevenLabs if you want to try another voice, or your own.
+
+## Explanation
+There's a lot of streaming involved in this project to keep everything low-latency. It may seem a bit complicated, but in practice there's only two streams that matter, text and audio. 
+
+Here's a quick overview of all that's going on!
+
+1. When a new user message comes in, we send it to OpenAI to get a streamed text response, via a sent-sent event.
+2. We pipe that into ElevenLabs text-to-speech WebSocket API, AND send it back to the front-end via a server-side-event.
+3. Whenever the ElevenLabs WebSocket sends audio chunks, we also send to the front-end via server-side-events.
+4. In the front-end, whenever we recieve text chunks from OpenAI, we display them in the last bot message.
+5. In the front-end, whenever we recieve audio chunks from OpenAI, pipe them to an audio playing service.
+6. The audio playing service adds chunks to its buffer, and also captures text-audio alignment information provided in the audio chunks
+7. While the audio playing service plays from its buffer, it also emits events that indicate what text is currently being read. 
+8. The react component highlights the word in the currently streamed bot message.
+
+
+## Project Setup
+
+First, let's bootstrap up our Next.js project with Mantine:
+
+```bash
+npx create-next-app@latest --example with-mantine chatbot
+cd chatbot
+npm install
+touch .env.local
+```
+
+Make sure to add these environment variables to your .env.local:
+
+```text
+OPENAI_API_KEY=
+ELEVENLABS_API_KEY=
+```
+
+Mantine is a UI-component library that will allow us to get leverage some UI boilerplate. 
+
+You can use any library you want! Now, let's add the logic!
+
+## Step 1: Create the Chatbot Component
+
+The `Chatbot` component handles user input and displays messages. This is the core of our frontend logic.
+
+Create `components/Chatbot.tsx` and the following:
+```typescript
+// components/Chatbot.tsx
+// TODO ADD TEXT MANUALLY LATER
+```
+
+### Explanation
+
+- **State Management**: We use `useState` to manage user input and messages. This helps us keep track of what the user has typed and what messages have been exchanged.
+- **Scroll Handling**: `useRef` and `useEffect` ensure the chat scrolls to the latest message. This provides a smooth user experience by automatically scrolling to the newest message.
+- **Event Source**: The `startListening` function initializes an EventSource to listen for server-sent events from the backend. This allows us to receive real-time updates from the server.
+
+## Step 2: Create the Message Component
+
+The `Message` component is responsible for displaying individual messages. It handles the formatting and highlights the spoken words.
+
+Create `components/Message.tsx` and the following:
+```typescript
+// components/Message.tsx
+// TODO ADD TEXT MANUALLY LATER
+```
+
+### Explanation
+
+- **Conditional Rendering**: The `renderContent` function highlights text only for the last message. This ensures that only the currently spoken words are highlighted.
+- **Styling**: Mantine's `Card` component is used for consistent styling. This helps in maintaining a clean and uniform look for the chat messages.
+
+## Step 3: Implement the Custom Hook
+
+The `useChatbot` custom hook manages the chatbot's state and handles communication with the server. This encapsulates the logic for maintaining the chat state and interacting with the backend.
+
+Create `hooks/useChatbot.ts` and the following:
+```typescript
+// hooks/useChatbot.ts
+// TODO ADD TEXT MANUALLY LATER
+```
+
+### Explanation
+
+- **State Management**: Manages messages, EventSource, and audio playback. This keeps our component clean and focused on rendering.
+- **Event Handling**: Processes incoming messages and audio chunks from the server. This allows us to handle real-time updates efficiently.
+
+## Step 4: Create the API Route
+
+The API route handles incoming chat messages and communicates with OpenAI and ElevenLabs. This is where the backend logic resides.
+
+Create `pages/api/chat.ts` and the following:
+```typescript
+// pages/api/chat.ts
+// TODO ADD TEXT MANUALLY LATER
+```
+
+### Explanation
+
+- **SSE Headers**: Sets headers for server-sent events. This ensures the client can receive real-time updates.
+- **WebSocket Connection**: Connects to ElevenLabs for real-time speech synthesis. This allows us to convert text to speech in real-time.
+- **OpenAI Streaming**: Streams responses from OpenAI and sends them to ElevenLabs and the client. This ensures low-latency communication.
+
+### Using your own voice
+If you'd like to use your own voice, simply create one in ElevenLabs, go to `Voices`, select your voice, then click the `ID` button to copy its id. Paste it in the code above.
+
+## Step 5: Create the Audio Player Class
+
+The `Base64AudioPlayer` class handles audio playback from Base64 encoded strings. This is essential for playing the audio received from ElevenLabs.
+
+Create `pages/classes/Base64AudioPlayer.ts` and the following:
+```typescript
+// pages/classes/Base64AudioPlayer.ts
+// TODO ADD TEXT MANUALLY LATER
+```
+
+### Explanation
+
+- **AudioContext**: Uses Web Audio API for audio playback. This provides a robust way to handle audio in the browser.
+- **Queue Management**: Manages a queue of audio chunks to ensure smooth playback. This ensures that the audio plays seamlessly.
+
+## Step 6: Create the Reading Index Class
+
+The `ReadingIndex` class manages the alignment of text and audio for highlighting. This ensures that the correct words are highlighted as they are spoken.
+
+Create `pages/classes/ReadingIndex.ts` and the following:
+```typescript
+// pages/classes/ReadingIndex.ts
+// TODO ADD TEXT MANUALLY LATER
+```
+
+### Explanation
+
+- **Alignment Management**: Keeps track of the start and end times of each character in the audio. This ensures accurate highlighting.
+- **Callback Handling**: Calls a callback function to highlight the current word being spoken. This provides real-time feedback to the user.
+
+## Step 7: Integrate Components in the Home Page
+
+Finally, integrate the `Chatbot` component in your home page. This brings everything together and makes the chatbot accessible to the user.
+
+Create `pages/index.tsx` and the following:
+```typescript
+// pages/index.tsx
+// TODO ADD TEXT MANUALLY LATER
+```
+
+### Explanation
+
+- **Layout**: Uses Mantine's `Container` for consistent layout. This ensures a clean and responsive design.
+- **Component Inclusion**: Includes the `Chatbot` component. This makes the chatbot available on the home page.
+
+## Conclusion
+
+Congratulations! You've built a sophisticated chatbot that responds in real-time, speaks the responses, and highlights the words being spoken. This project showcases the power of Next.js, Mantine, OpenAI, and ElevenLabs, providing a rich, interactive user experience.
+
+Deploy your project to Vercel or any other platform that supports serverless functions to make your chatbot accessible to the world!
+
+Happy coding!
