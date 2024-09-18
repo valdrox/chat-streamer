@@ -2,7 +2,6 @@ import { useEffect, useRef, useState } from 'react';
 import {
   Box,
   Button,
-  Card,
   Container,
   ScrollArea,
   Stack,
@@ -11,6 +10,7 @@ import {
   useMantineTheme,
 } from '@mantine/core';
 import { Base64AudioPlayer } from '../pages/classes/Base64AudioPlayer';
+import Message from './Message';
 
 const Chatbot = () => {
   const [messages, setMessages] = useState<{ content: string; role: string }[]>([]);
@@ -32,8 +32,6 @@ const Chatbot = () => {
       audioPlayerRef.current?.stopAndFlush();
     };
   }, []);
-
-
 
   const handleSend = () => {
     audioPlayerRef.current?.stopAndFlush();
@@ -117,33 +115,14 @@ const Chatbot = () => {
         </Text>
         <Stack spacing="md">
           {messages.map((msg, index) => (
-            <Card
+            <Message
               key={index}
-              shadow="sm"
-              padding="sm"
-              radius="md"
-              style={{
-                alignSelf: msg.role === 'user' ? 'flex-end' : 'flex-start',
-                backgroundColor: msg.role === 'user' ? theme.colors.blue[0] : theme.colors.teal[0],
-                maxWidth: '80%',
-                whiteSpace: 'pre-wrap'
-              }}
-            >
-              {index !== messages.length - 1 ? (
-                <Text color={msg.role === 'user' ? theme.colors.blue[7] : theme.colors.teal[7]}>
-                  {msg.content}
-                </Text>
-              ) : (
-                <Text
-                  span
-                  color={msg.role === 'user' ? theme.colors.blue[7] : theme.colors.teal[7]}
-                >
-                  <Text span>{msg.content.slice(0, startIndex)}</Text>
-                  <Text span color={theme.colors.red[7]}>{msg.content.slice(startIndex, endIndex)}</Text>
-                  <Text span>{msg.content.slice(endIndex)}</Text>
-                </Text>
-              )}
-            </Card>
+              content={msg.content}
+              role={msg.role as 'user' | 'assistant'}
+              isLast={index === messages.length - 1}
+              startIndex={startIndex}
+              endIndex={endIndex}
+            />
           ))}
           <div ref={scrollRef} />
         </Stack>
