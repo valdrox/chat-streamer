@@ -20,15 +20,10 @@ const Home = () => {
       </Head>
       <main>
         <Container>
-          <Grid>
-            <Grid.Col span={8}>
-              <Tutorial />
-            </Grid.Col>
-            
-            <Grid.Col span={4}>
-              <Chatbot />
-            </Grid.Col>
-          </Grid>
+          <Tutorial />
+          <div id="demo">
+            <Chatbot />
+          </div>
         </Container>
       </main>
     </>

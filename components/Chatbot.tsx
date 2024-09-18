@@ -1,4 +1,3 @@
-// components/Chatbot.tsx
 import { useEffect, useRef, useState } from 'react';
 import {
   Box,
@@ -15,7 +14,6 @@ import Message from './Message';
 
 const Chatbot = () => {
   const [input, setInput] = useState('');
-  const scrollRef = useRef<HTMLDivElement>(null);
   const theme = useMantineTheme();
 
   const {
@@ -35,14 +33,11 @@ const Chatbot = () => {
     setInput(''); // Clear input field
   };
 
-  useEffect(() => {
-    scrollRef.current?.scrollIntoView({ behavior: 'smooth' });
-  }, [messages]);
 
   return (
     <Container
       style={{
-        height: '100%',
+        minHeight: 400,
         overflow: 'hidden',
         display: 'flex',
         width: '100%',
@@ -70,7 +65,6 @@ const Chatbot = () => {
               endIndex={endIndex}
             />
           ))}
-          <div ref={scrollRef} />
         </Stack>
       </ScrollArea>
       <Box mt="md" style={{ display: 'flex', gap: theme.spacing.sm, padding: theme.spacing.sm }}>
