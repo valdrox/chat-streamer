@@ -1,5 +1,5 @@
 import Head from 'next/head';
-import { Container } from '@mantine/core';
+import { Container, Grid } from '@mantine/core';
 import Chatbot from '@/components/Chatbot';
 import Tutorial from '../components/tutorial.mdx';
 
@@ -20,8 +20,15 @@ const Home = () => {
       </Head>
       <main>
         <Container>
-          <Chatbot />
-          <Tutorial />
+          <Grid>
+            <Grid.Col span={8}>
+              <Tutorial />
+            </Grid.Col>
+            
+            <Grid.Col span={4}>
+              <Chatbot />
+            </Grid.Col>
+          </Grid>
         </Container>
       </main>
     </>
