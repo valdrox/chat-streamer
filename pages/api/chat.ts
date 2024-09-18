@@ -90,7 +90,6 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       );
 
       for await (const textChunk of chunkedStream) {
-        console.log('🚀 ~ forawait ~ textChunk:', textChunk);
         // 3. Send the properly chunked text to ElevenLabs for speech synthesis
         elevenLabsWs.send(JSON.stringify({ text: textChunk }));
 
