@@ -58,17 +58,35 @@ export class Base64AudioPlayer {
         );
 
         // Now concatenate the adjusted values
-        this.runAlignement.chars = this.runAlignement.chars.concat([' ', ...chunk.alignment.chars]);
-        this.runAlignement.charStartTimesMs = this.runAlignement.charStartTimesMs.concat([
-          adjustedStartTimes[0] - 1,
-          ...adjustedStartTimes,
-        ]);
-        this.runAlignement.charDurationsMs = this.runAlignement.charDurationsMs.concat([
-          1,
-          ...chunk.alignment.charDurationsMs,
-        ]);
-      }
+        // if there is at least one space or new line, we don't need to add a space
+        const atLeastOneSpaceOrNewLine = 
+          this.runAlignement.chars[this.runAlignement.chars.length - 1] === ' ' ||
+          this.runAlignement.chars[this.runAlignement.chars.length - 1] === '\n' ||
+          chunk.alignment.chars[0] === ' ' ||
+          chunk.alignment.chars[0] === '\n';
 
+        if (!atLeastOneSpaceOrNewLine) {
+          this.runAlignement.chars = this.runAlignement.chars.concat([
+            ' ',
+            ...chunk.alignment.chars,
+          ]);
+          this.runAlignement.charStartTimesMs = this.runAlignement.charStartTimesMs.concat([
+            adjustedStartTimes[0] - 1,
+            ...adjustedStartTimes,
+          ]);
+          this.runAlignement.charDurationsMs = this.runAlignement.charDurationsMs.concat([
+            1,
+            ...chunk.alignment.charDurationsMs,
+          ]);
+        } else {
+          this.runAlignement.chars = this.runAlignement.chars.concat(chunk.alignment.chars);
+          this.runAlignement.charStartTimesMs =
+            this.runAlignement.charStartTimesMs.concat(adjustedStartTimes);
+          this.runAlignement.charDurationsMs = this.runAlignement.charDurationsMs.concat(
+            chunk.alignment.charDurationsMs
+          );
+        }
+      }
     }
 
     if (!this.isPlaying) {
