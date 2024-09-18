@@ -59,12 +59,16 @@ export class Base64AudioPlayer {
 
         // Now concatenate the adjusted values
         this.runAlignement.chars = this.runAlignement.chars.concat([' ', ...chunk.alignment.chars]);
-        this.runAlignement.charStartTimesMs =
-          this.runAlignement.charStartTimesMs.concat(adjustedStartTimes);
-        this.runAlignement.charDurationsMs = this.runAlignement.charDurationsMs.concat(
-          chunk.alignment.charDurationsMs
-        );
+        this.runAlignement.charStartTimesMs = this.runAlignement.charStartTimesMs.concat([
+          adjustedStartTimes[0] - 1,
+          ...adjustedStartTimes,
+        ]);
+        this.runAlignement.charDurationsMs = this.runAlignement.charDurationsMs.concat([
+          1,
+          ...chunk.alignment.charDurationsMs,
+        ]);
       }
+
     }
 
     if (!this.isPlaying) {
@@ -81,6 +85,11 @@ export class Base64AudioPlayer {
                 currentTime >= startTime &&
                 currentTime < startTime + this.runAlignement.charDurationsMs[idx]
             );
+
+            // if it's a space, we want to go back to the last word
+            if (charIndex > 0 && this.runAlignement.chars[charIndex] === ' ') {
+              charIndex--;
+            }
 
             if (charIndex === -1) {
               // If we overshot and no character matches, ensure we don't go out of bounds.
