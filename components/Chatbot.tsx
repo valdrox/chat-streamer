@@ -45,7 +45,7 @@ const Chatbot = () => {
           fw={700}
           style={{ fontSize: '1.5rem', marginBottom: theme.spacing.md }}
         >
-          Demo
+          Your-Voice-Enabled Chatbot
         </Text>
         <Stack gap="md">
           {messages.map((msg, index) => (
