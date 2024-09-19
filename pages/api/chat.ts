@@ -1,7 +1,7 @@
 import { NextApiRequest, NextApiResponse } from 'next';
 import OpenAI from 'openai';
 import WebSocket from 'ws';
-import { Alignment } from '../classes/ReadingIndex';
+import { Alignment } from '../../classes/ReadingIndex';
 
 const openai = new OpenAI();
 const ELEVENLABS_API_KEY = process.env.ELEVENLABS_API_KEY;

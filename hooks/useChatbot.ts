@@ -1,5 +1,5 @@
 import { useEffect, useState, useRef } from 'react';
-import { Base64AudioPlayer } from '../pages/classes/Base64AudioPlayer';
+import { Base64AudioPlayer } from '../classes/Base64AudioPlayer';
 
 export interface Message {
   content: string;
