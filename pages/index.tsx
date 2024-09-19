@@ -17,7 +17,7 @@ const Home = () => {
           property="og:description"
           content="Discover how to create a real-time voice chatbot with customizable voices and interactive text highlighting. Build an engaging chatbot experience using Next.js, OpenAI, and ElevenLabs."
         />
-        <meta property="og:image" content="/screenshot.png" />
+        <meta property="og:image" content="https://chat-streamer-rw1r.vercel.app/screenshot.png" />
         <meta property="og:url" content="https://chat-streamer-rw1r.vercel.app/" />
         <meta name="twitter:card" content="summary_large_image" />
         <meta name="twitter:title" content="Build a Real-Time Voice Chatbot with Any Voice" />
@@ -25,7 +25,7 @@ const Home = () => {
           name="twitter:description"
           content="Create an advanced chatbot that responds in real-time with customizable voices and interactive text highlighting. Follow this guide to build an engaging chatbot experience."
         />
-        <meta name="twitter:image" content="/screenshot.png" />
+        <meta name="twitter:image" content="https://chat-streamer-rw1r.vercel.app/screenshot.png" />
       </Head>
       <main>
         <Container>
