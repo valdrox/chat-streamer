@@ -1,6 +1,7 @@
 import { NextApiRequest, NextApiResponse } from 'next';
 import OpenAI from 'openai';
 import WebSocket from 'ws';
+import { Alignment } from '../classes/ReadingIndex';
 
 const openai = new OpenAI();
 const ELEVENLABS_API_KEY = process.env.ELEVENLABS_API_KEY;
@@ -44,7 +45,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
   try {
     // Extract messages from URL parameters
-    const messages = JSON.parse(req.query.messages) as { content: string; role: string }[];
+    const messages = JSON.parse(req.query.messages as string) as OpenAI.ChatCompletionMessage[];
 
     if (messages.length === 0) {
       res.status(400).json({ error: 'Message parameter is required' });
@@ -56,7 +57,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       `wss://api.elevenlabs.io/v1/text-to-speech/${VOICE_ID}/stream-input?model_id=eleven_turbo_v2_5`
     );
 
-    let accumulatedChunk = null; // To accumulate audio data if no alignment is set
+    let accumulatedChunk: { audio: string; alignment: Alignment } | null = null; // To accumulate audio data if no alignment is set
 
     elevenLabsWs.on('open', async () => {
       console.log('Connected to ElevenLabs WebSocket');

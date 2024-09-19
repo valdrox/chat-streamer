@@ -76,7 +76,7 @@ export class ReadingIndex {
     const currentTime = Date.now() - this.startTime;
     let charIndex = this.runAlignment.charStartTimesMs.findIndex(
       (startTime, idx) =>
-        currentTime >= startTime && currentTime < startTime + this.runAlignment.charDurationsMs[idx]
+        currentTime >= startTime && currentTime < startTime + this.runAlignment!.charDurationsMs[idx]
     );
 
     // if it's a space, we want to go back to the last word

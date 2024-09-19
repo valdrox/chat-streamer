@@ -9,30 +9,23 @@ import {
   TextInput,
   useMantineTheme,
 } from '@mantine/core';
-import useChatbot from '../hooks/useChatbot'; // Import custom hook
+import useChatbot, { Message as MessageType } from '../hooks/useChatbot'; // Import custom hook
 import Message from './Message';
 
 const Chatbot = () => {
   const [input, setInput] = useState('');
   const theme = useMantineTheme();
 
-  const {
-    messages,
-    startListening,
-    setMessages,
-    startIndex,
-    endIndex,
-    audioPlayerRef,
-  } = useChatbot(); // Use the custom hook
+  const { messages, startListening, setMessages, startIndex, endIndex, audioPlayerRef } =
+    useChatbot(); // Use the custom hook
 
   const handleSend = () => {
     audioPlayerRef.current?.stopAndFlush(); // Stop audio playback if necessary
-    const newMessages = [...messages, { content: input, role: 'user' }];
+    const newMessages: MessageType[] = [...messages, { content: input, role: 'user' }];
     setMessages(newMessages); // Update message state
     startListening(newMessages); // Start the EventSource listener
     setInput(''); // Clear input field
   };
-
 
   return (
     <Container
@@ -48,13 +41,13 @@ const Chatbot = () => {
     >
       <ScrollArea style={{ flex: 1, padding: theme.spacing.md, overflow: 'auto' }}>
         <Text
-          align="center"
-          weight={700}
+          ta="center"
+          fw={700}
           style={{ fontSize: '1.5rem', marginBottom: theme.spacing.md }}
         >
           Demo
         </Text>
-        <Stack spacing="md">
+        <Stack gap="md">
           {messages.map((msg, index) => (
             <Message
               key={index}
