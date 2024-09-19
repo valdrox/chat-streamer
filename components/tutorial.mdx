@@ -72,7 +72,88 @@ Create `components/Chatbot.tsx` and add the following:
 
 ```typescript
 // components/Chatbot.tsx
-// TODO ADD TEXT MANUALLY LATER
+import { useEffect, useRef, useState } from 'react';
+import {
+  Box,
+  Button,
+  Container,
+  ScrollArea,
+  Stack,
+  Text,
+  TextInput,
+  useMantineTheme,
+} from '@mantine/core';
+import useChatbot, { Message as MessageType } from '../hooks/useChatbot'; // Import custom hook
+import Message from './Message';
+
+const Chatbot = () => {
+  const [input, setInput] = useState('');
+  const theme = useMantineTheme();
+
+  const { messages, startListening, setMessages, startIndex, endIndex, audioPlayerRef } =
+    useChatbot(); // Use the custom hook
+
+  const handleSend = () => {
+    audioPlayerRef.current?.stopAndFlush(); // Stop audio playback if necessary
+    const newMessages: MessageType[] = [...messages, { content: input, role: 'user' }];
+    setMessages(newMessages); // Update message state
+    startListening(newMessages); // Start the EventSource listener
+    setInput(''); // Clear input field
+  };
+
+  return (
+    <Container
+      style={{
+        minHeight: 400,
+        overflow: 'hidden',
+        display: 'flex',
+        width: '100%',
+        flexDirection: 'column',
+        borderRadius: theme.radius.md,
+        backgroundColor: theme.colors.gray[0],
+      }}
+    >
+      <ScrollArea style={{ flex: 1, padding: theme.spacing.md, overflow: 'auto' }}>
+        <Text
+          ta="center"
+          fw={700}
+          style={{ fontSize: '1.5rem', marginBottom: theme.spacing.md }}
+        >
+          Your-Voice-Enabled Chatbot
+        </Text>
+        <Stack gap="md">
+          {messages.map((msg, index) => (
+            <Message
+              key={index}
+              content={msg.content}
+              role={msg.role as 'user' | 'assistant'}
+              isLast={index === messages.length - 1}
+              startIndex={startIndex}
+              endIndex={endIndex}
+            />
+          ))}
+        </Stack>
+      </ScrollArea>
+      <Box mt="md" style={{ display: 'flex', gap: theme.spacing.sm, padding: theme.spacing.sm }}>
+        <TextInput
+          value={input}
+          onChange={(e) => setInput(e.currentTarget.value)}
+          placeholder="Type your message"
+          style={{ flexGrow: 1 }}
+          onKeyUp={(e) => {
+            if (e.key === 'Enter') {
+              handleSend();
+            }
+          }}
+        />
+        <Button onClick={handleSend}>Send</Button>
+      </Box>
+    </Container>
+  );
+};
+
+export default Chatbot;
+
 ```
 
 ### Explanation
@@ -89,7 +170,58 @@ Create `components/Message.tsx` and add the following:
 
 ```typescript
 // components/Message.tsx
-// TODO ADD TEXT MANUALLY LATER
+import { Card, Text, useMantineTheme } from '@mantine/core';
+
+interface MessageProps {
+  content: string;
+  role: 'user' | 'assistant';
+  isLast: boolean;
+  startIndex: number | null;
+  endIndex: number | null;
+}
+
+const Message = ({ content, role, isLast, startIndex, endIndex }: MessageProps) => {
+  const theme = useMantineTheme();
+
+  // Conditionally handle highlighted text only for the last message
+  const renderContent = () => {
+    if (isLast && startIndex !== null && endIndex !== null) {
+      return (
+        <Text span color={role === 'user' ? theme.colors.blue[7] : theme.colors.teal[7]}>
+          <Text span>{content.slice(0, startIndex)}</Text>
+          <Text span color={theme.colors.red[7]}>{content.slice(startIndex, endIndex)}</Text>
+          <Text span>{content.slice(endIndex)}</Text>
+        </Text>
+      );
+    }
+    
+    // Render normal content for non-last messages or when indices are not defined
+    return (
+      <Text color={role === 'user' ? theme.colors.blue[7] : theme.colors.teal[7]}>
+        {content}
+      </Text>
+    );
+  };
+
+  return (
+    <Card
+      shadow="sm"
+      padding="sm"
+      radius="md"
+      style={{
+        alignSelf: role === 'user' ? 'flex-end' : 'flex-start',
+        backgroundColor: role === 'user' ? theme.colors.blue[0] : theme.colors.teal[0],
+        maxWidth: '80%',
+        whiteSpace: 'pre-wrap',
+      }}
+    >
+      {renderContent()}
+    </Card>
+  );
+};
+
+export default Message;
+
 ```
 
 ### Explanation
@@ -105,7 +237,99 @@ Create `hooks/useChatbot.ts` and add the following:
 
 ```typescript
 // hooks/useChatbot.ts
-// TODO ADD TEXT MANUALLY LATER
+import { useEffect, useState, useRef } from 'react';
+import { Base64AudioPlayer } from '../classes/Base64AudioPlayer';
+
+export interface Message {
+  content: string;
+  role: 'user' | 'assistant';
+}
+
+const useChatbot = () => {
+  const [messages, setMessages] = useState<Message[]>([]);
+  const [eventSource, setEventSource] = useState<EventSource | null>(null);
+  const [startIndex, setStartIndex] = useState<number | null>(null);
+  const [endIndex, setEndIndex] = useState<number | null>(null);
+  const audioPlayerRef = useRef<Base64AudioPlayer | null>(null);
+
+  // Initialize the audio player and set startIndex, endIndex handlers
+  useEffect(() => {
+    audioPlayerRef.current = new Base64AudioPlayer((startIdx, endIdx) => {
+      setStartIndex(startIdx);
+      setEndIndex(endIdx);
+    });
+
+    return () => {
+      audioPlayerRef.current?.stopAndFlush();
+    };
+  }, []);
+
+  const startListening = (newMessages: Message[]) => {
+    const urlEncodedMessages = encodeURIComponent(JSON.stringify(newMessages));
+
+    // Close any previous EventSource connections
+    if (eventSource) {
+      eventSource.close();
+    }
+
+    const url = `/api/chat?messages=${urlEncodedMessages}`;
+    const newEventSource = new EventSource(url);
+    setEventSource(newEventSource);
+
+    audioPlayerRef.current?.resumeIfSuspended(); // browser requirement
+
+    // Handle incoming messages from the server
+    newEventSource.onmessage = (event) => {
+      try {
+        const data = JSON.parse(event.data);
+
+        if (data.text) {
+          setMessages((prevMessages) => {
+            const lastMessage = prevMessages[prevMessages.length - 1];
+            if (lastMessage && lastMessage.role === 'assistant') {
+              // Append to the last assistant message
+              return [
+                ...prevMessages.slice(0, -1),
+                {
+                  content: lastMessage.content + data.text,
+                  role: 'assistant',
+                },
+              ];
+            } else {
+              // Create a new assistant message
+              return [...prevMessages, { content: data.text, role: 'assistant' }];
+            }
+          });
+        } else if (data.audio) {
+          audioPlayerRef.current?.addChunk(data);
+        }
+      } catch (error) {
+        console.error('Failed to parse SSE message:', error);
+      }
+    };
+
+    newEventSource.onerror = (error) => {
+      console.error('EventSource error:', error);
+      newEventSource.close();
+    };
+
+    return () => {
+      newEventSource.close();
+    };
+  };
+
+  return {
+    messages,
+    startListening,
+    setMessages,
+    startIndex,
+    endIndex,
+    audioPlayerRef,
+  };
+};
+
+export default useChatbot;
+
 ```
 
 ### Explanation
@@ -121,7 +345,161 @@ Create `pages/api/chat.ts` and add the following:
 
 ```typescript
 // pages/api/chat.ts
-// TODO ADD TEXT MANUALLY LATER
+import { NextApiRequest, NextApiResponse } from 'next';
+import OpenAI from 'openai';
+import WebSocket from 'ws';
+import { Alignment } from '../../classes/ReadingIndex';
+
+const openai = new OpenAI();
+const ELEVENLABS_API_KEY = process.env.ELEVENLABS_API_KEY;
+const VOICE_ID = process.env.ELEVENLABS_VOICE_ID ?? '21m00Tcm4TlvDq8ikWAM';
+
+// Helper function to split text into chunks without breaking sentences
+async function* textChunker(chunks: AsyncIterable<string>): AsyncGenerator<string> {
+  const splitters = /\n/; // Regular expression for valid split characters
+  let buffer = '';
+
+  for await (const text of chunks) {
+    buffer += text;
+
+    let splitIndex = -1;
+    // Find the last valid splitting point in the buffer
+    for (let i = buffer.length - 1; i >= 0; i--) {
+      if (splitters.test(buffer[i])) {
+        splitIndex = i;
+        break;
+      }
+    }
+
+    // If a splitting point is found, yield the chunk and update the buffer
+    if (splitIndex !== -1) {
+      yield buffer.slice(0, splitIndex + 1); // Yield up to the splitter
+      buffer = buffer.slice(splitIndex + 1); // Keep the remaining part in the buffer
+    }
+  }
+
+  // Yield any remaining text
+  if (buffer) {
+    yield buffer;
+  }
+}
+
+export default async function handler(req: NextApiRequest, res: NextApiResponse) {
+  // Set SSE headers
+  res.setHeader('Content-Type', 'text/event-stream');
+  res.setHeader('Cache-Control', 'no-cache');
+  res.setHeader('Connection', 'keep-alive');
+
+  try {
+    // Extract messages from URL parameters
+    const messages = JSON.parse(req.query.messages as string) as OpenAI.ChatCompletionMessage[];
+
+    if (messages.length === 0) {
+      res.status(400).json({ error: 'Message parameter is required' });
+      return;
+    }
+
+    // 1. Establish WebSocket connection to ElevenLabs
+    const elevenLabsWs = new WebSocket(
+      `wss://api.elevenlabs.io/v1/text-to-speech/${VOICE_ID}/stream-input?model_id=eleven_turbo_v2_5`
+    );
+
+    let accumulatedChunk: { audio: string; alignment: Alignment } | null = null; // To accumulate audio data if no alignment is set
+
+    elevenLabsWs.on('open', async () => {
+      console.log('Connected to ElevenLabs WebSocket');
+
+      // Send initial voice settings (optional)
+      elevenLabsWs.send(
+        JSON.stringify({
+          text: ' ',
+          voice_settings: { stability: 0.8, similarity_boost: 0.8 },
+          xi_api_key: ELEVENLABS_API_KEY,
+        })
+      );
+
+      // 2. Start OpenAI streaming after the WebSocket connection is established
+      const openAiStream = await openai.chat.completions.create({
+        messages: [{ role: 'system', content: 'You are a helpful assistant.' }, ...messages],
+        model: 'gpt-4o-mini',
+        stream: true,
+      });
+
+      // Create a generator for the OpenAI text stream
+      const chunkedStream = textChunker(
+        (async function* () {
+          for await (const chunk of openAiStream) {
+            const delta = chunk.choices[0]?.delta?.content;
+            if (delta) {
+              yield delta;
+            }
+          }
+        })()
+      );
+
+      for await (const textChunk of chunkedStream) {
+        // 3. Send the properly chunked text to ElevenLabs for speech synthesis
+        elevenLabsWs.send(JSON.stringify({ text: textChunk }));
+
+        // Also stream the text to the client in real-time
+        res.write(`data: ${JSON.stringify({ text: textChunk })}\n\n`);
+      }
+
+      console.log('OpenAI stream ended.');
+      elevenLabsWs.send(JSON.stringify({ text: '' })); // Signal the end of text to ElevenLabs
+    });
+
+    // 4. Listen for audio responses from ElevenLabs and stream them to the client
+    elevenLabsWs.on('message', (data: string) => {
+      try {
+        const parsedData = JSON.parse(data);
+
+        if (parsedData.audio) {
+          const chunk = { audio: parsedData.audio, alignment: parsedData.alignment };
+
+          if (parsedData.alignment) {
+            // Send the accumulated chunk if a new alignment is received
+            if (accumulatedChunk) {
+              res.write(`data: ${JSON.stringify(accumulatedChunk)}\n\n`);
+              accumulatedChunk = chunk; // Clear accumulated chunk
+            } else {
+              accumulatedChunk = chunk; // Update the current chunk with alignment
+            }
+          } else {
+            if (accumulatedChunk) {
+              accumulatedChunk.audio = Buffer.concat([
+                Buffer.from(accumulatedChunk.audio, 'base64'),
+                Buffer.from(chunk.audio, 'base64'),
+              ]).toString('base64');
+            } else {
+              res.write(`data: ${JSON.stringify(chunk)}\n\n`);
+            }
+          }
+        }
+      } catch (error) {
+        console.error('Error processing ElevenLabs WebSocket message:', error);
+      }
+    });
+
+    elevenLabsWs.on('close', () => {
+      console.log('ElevenLabs WebSocket closed.');
+      // Send the last accumulated chunk if available
+      if (accumulatedChunk) {
+        res.write(`data: ${JSON.stringify(accumulatedChunk)}\n\n`);
+      }
+      res.end(); // Ensure the HTTP response ends if the WebSocket closes
+    });
+
+    elevenLabsWs.on('error', (err) => {
+      console.error('ElevenLabs WebSocket error:', err);
+      res.status(500).json({ error: 'ElevenLabs WebSocket connection error' });
+    });
+  } catch (error) {
+    console.error('Error in handler:', error);
+    res.status(500).json({ error: 'An error occurred' });
+  }
+}
+
 ```
 
 ### Explanation
@@ -142,7 +520,101 @@ Create `pages/classes/Base64AudioPlayer.ts` and add the following:
 
 ```typescript
 // pages/classes/Base64AudioPlayer.ts
-// TODO ADD TEXT MANUALLY LATER
+import { Alignment, ReadingIndex } from './ReadingIndex';
+
+export type AudioChunk = {
+  audio: string;
+  alignment?: Alignment;
+};
+
+export class Base64AudioPlayer {
+  private audioQueue: AudioChunk[] = [];
+  private isPlaying: boolean = false;
+  private audioContext: AudioContext;
+  private sourceNode: AudioBufferSourceNode | null = null;
+  private readingIndex: ReadingIndex;
+
+  constructor(callback: (startIndex: number, endIndex: number) => void) {
+    this.audioContext = new (window.AudioContext || (window as any).webkitAudioContext)();
+    this.readingIndex = new ReadingIndex(callback);
+  }
+
+  public resumeIfSuspended(): void {
+    if (this.audioContext.state === 'suspended') {
+      this.audioContext.resume();
+    }
+  }
+
+  public async addChunk(chunk: AudioChunk): Promise<void> {
+    this.audioQueue.push(chunk);
+
+    if (chunk.alignment) {
+      this.readingIndex.addAlignment(chunk.alignment);
+    }
+
+    if (!this.isPlaying) {
+      this.isPlaying = true;
+      this.readingIndex.startChecking();
+      await this.playQueue();
+    }
+  }
+
+  private async playQueue(): Promise<void> {
+    while (this.audioQueue.length > 0) {
+      const chunk = this.audioQueue.shift();
+      if (chunk) {
+        await this.playChunk(chunk);
+      }
+    }
+    this.isPlaying = false;
+    this.readingIndex.stopChecking();
+  }
+
+  private async playChunk(chunk: AudioChunk): Promise<void> {
+    return new Promise((resolve, reject) => {
+      const audioData = this.base64ToArrayBuffer(chunk.audio);
+
+      this.audioContext.decodeAudioData(
+        audioData,
+        (buffer) => {
+          this.sourceNode = this.audioContext.createBufferSource();
+          this.sourceNode.buffer = buffer;
+          this.sourceNode.connect(this.audioContext.destination);
+          this.sourceNode.start(0);
+          this.sourceNode.onended = () => {
+            resolve();
+          };
+        },
+        (error) => {
+          console.error('Error decoding audio data', error);
+          reject(error);
+        }
+      );
+    });
+  }
+
+  public stopAndFlush(): void {
+    if (this.sourceNode) {
+      this.sourceNode.stop();
+      this.sourceNode.disconnect();
+      this.sourceNode = null;
+    }
+    this.isPlaying = false;
+    this.audioQueue = [];
+    this.readingIndex.stopChecking();
+  }
+
+  private base64ToArrayBuffer(base64: string): ArrayBuffer {
+    const binaryString = window.atob(base64);
+    const len = binaryString.length;
+    const bytes = new Uint8Array(len);
+    for (let i = 0; i < len; i++) {
+      bytes[i] = binaryString.charCodeAt(i);
+    }
+    return bytes.buffer;
+  }
+}
+
 ```
 
 ### Explanation
@@ -158,7 +630,116 @@ Create `pages/classes/ReadingIndex.ts` and add the following:
 
 ```typescript
 // pages/classes/ReadingIndex.ts
-// TODO ADD TEXT MANUALLY LATER
+export type Alignment = {
+  chars: string[]; // Array of characters in the audio chunk
+  charStartTimesMs: number[]; // Start times of each character in the audio chunk
+  charDurationsMs: number[]; // Durations of each character in the audio chunk
+};
+
+export class ReadingIndex {
+  private runAlignment: Alignment | null = null;
+  private startTime: number | null = null;
+  private checkWordingInterval: NodeJS.Timeout | null = null;
+  private callback: (startIndex: number, endIndex: number) => void;
+
+  constructor(callback: (startIndex: number, endIndex: number) => void) {
+    this.callback = callback;
+  }
+
+  public startChecking(): void {
+    if (this.startTime === null) {
+      this.startTime = Date.now();
+      this.checkWordingInterval = setInterval(() => {
+        this.checkAlignment();
+      }, 100);
+    }
+  }
+
+  public stopChecking(): void {
+    if (this.checkWordingInterval) {
+      clearInterval(this.checkWordingInterval);
+      this.checkWordingInterval = null;
+    }
+    this.runAlignment = null;
+    this.startTime = null;
+    this.callback(-1, -1);
+  }
+
+  public addAlignment(chunkAlignment: Alignment): void {
+    if (!this.runAlignment) {
+      this.runAlignment = chunkAlignment;
+    } else {
+      // Calculate the offset: last start time + last duration
+      const lastStartTime =
+        this.runAlignment.charStartTimesMs.length > 0
+          ? this.runAlignment.charStartTimesMs[this.runAlignment.charStartTimesMs.length - 1]
+          : 0;
+      const lastDuration =
+        this.runAlignment.charDurationsMs.length > 0
+          ? this.runAlignment.charDurationsMs[this.runAlignment.charDurationsMs.length - 1]
+          : 0;
+      const offset = lastStartTime + lastDuration;
+
+      // Adjust the new chunk's start times by adding the offset
+      const adjustedStartTimes = chunkAlignment.charStartTimesMs.map(
+        (startTime) => startTime + offset
+      );
+
+      // Concatenate the adjusted values, ensuring there's space where needed
+      const atLeastOneSpaceOrNewLine =
+        ['\n', ' '].includes(this.runAlignment.chars[this.runAlignment.chars.length - 1]) ||
+        ['\n', ' '].includes(chunkAlignment.chars[0]);
+
+      if (!atLeastOneSpaceOrNewLine) {
+        this.runAlignment.chars.push(' ', ...chunkAlignment.chars);
+        this.runAlignment.charStartTimesMs.push(adjustedStartTimes[0] - 1, ...adjustedStartTimes);
+        this.runAlignment.charDurationsMs.push(1, ...chunkAlignment.charDurationsMs);
+      } else {
+        this.runAlignment.chars.push(...chunkAlignment.chars);
+        this.runAlignment.charStartTimesMs.push(...adjustedStartTimes);
+        this.runAlignment.charDurationsMs.push(...chunkAlignment.charDurationsMs);
+      }
+    }
+  }
+
+  private checkAlignment(): void {
+    if (!this.runAlignment || !this.startTime) return;
+
+    const currentTime = Date.now() - this.startTime;
+    let charIndex = this.runAlignment.charStartTimesMs.findIndex(
+      (startTime, idx) =>
+        currentTime >= startTime && currentTime < startTime + this.runAlignment!.charDurationsMs[idx]
+    );
+
+    // if it's a space, we want to go back to the last word
+    if (charIndex > 0 && this.runAlignment.chars[charIndex] === ' ') {
+      charIndex--;
+    }
+
+    if (charIndex === -1) {
+      // If we overshot and no character matches, ensure we don't go out of bounds.
+      charIndex = this.runAlignment.charStartTimesMs.length - 1;
+    }
+
+    if (charIndex > 0) {
+      // Get the first space or period before and after the current character
+      let startIndex = charIndex - 1;
+      let endIndex = charIndex - 1;
+      while (startIndex >= 0 && this.runAlignment.chars[startIndex] !== ' ') {
+        startIndex--;
+      }
+      while (
+        endIndex < this.runAlignment.chars.length &&
+        this.runAlignment.chars[endIndex] !== ' '
+      ) {
+        endIndex++;
+      }
+
+      this.callback(Math.max(0, startIndex), endIndex);
+    }
+  }
+}
+
 ```
 
 ### Explanation
@@ -174,7 +755,23 @@ Create `pages/index.tsx` and add the following:
 
 ```typescript
 // pages/index.tsx
-// TODO ADD TEXT MANUALLY LATER
+import { Container, Grid } from '@mantine/core';
+import Chatbot from '@/components/Chatbot';
+
+const Home = () => {
+  return (
+    <>     
+      <main>
+        <Container>
+          <Chatbot />
+        </Container>
+      </main>
+    </>
+  );
+};
+
+export default Home;
+
 ```
 
 ### Explanation
