@@ -5,7 +5,7 @@ import { Alignment } from '../../classes/ReadingIndex';
 
 const openai = new OpenAI();
 const ELEVENLABS_API_KEY = process.env.ELEVENLABS_API_KEY;
-const VOICE_ID = '21m00Tcm4TlvDq8ikWAM';
+const VOICE_ID = process.env.ELEVENLABS_VOICE_ID ?? '21m00Tcm4TlvDq8ikWAM';
 
 // Helper function to split text into chunks without breaking sentences
 async function* textChunker(chunks: AsyncIterable<string>): AsyncGenerator<string> {
