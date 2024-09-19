@@ -4,9 +4,10 @@ In this tutorial, you'll learn how to build a ChatGPT-like chatbot that not only
 You can even use your voice!
 The chatbot will highlight the words it is currently speaking, providing an immersive and interactive experience. 
 We'll use Next.js with server-sent events (SSE) for low-latency communication, and Mantine for UI components. 
-Buy using server-sent events, we can keep deployment quick and easy deployment, thanks to its serverless architecture.
+By using server-sent events, we can keep deployment quick and easy thanks the serverless architecture.
+![screenshot](/screenshot.png)
 
-Want to see it in action? Jump to [demo](#demo).
+Want to see it in action? Jump to [demo](#demo), or follow this tutorial to build this yourself!
 
 ## Prerequisites
 
@@ -14,10 +15,13 @@ Before we start, ensure you have the following:
 
 - Node.js installed
 - API keys for OpenAI and ElevenLabs
-- A voice id from ElevenLabs if you want to try another voice, or your own.
+- A voice id from ElevenLabs (if you want to try a particular voice)
 
-## Explanation
-There's a lot of streaming involved in this project to keep everything low-latency. It may seem a bit complicated, but in practice there's only two streams that matter, text and audio. 
+## Overview of the data
+
+There's a lot of streaming involved in this project to keep everything low-latency. 
+It may seem a bit complicated, but in practice there's only two streams that matter, text and audio. 
+Follow where each is going individually will help you understand the logic better.  
 
 Here's a quick overview of all that's going on!
 
@@ -30,6 +34,7 @@ Here's a quick overview of all that's going on!
 7. While the audio playing service plays from its buffer, it also emits events that indicate what text is currently being read. 
 8. The react component highlights the word in the currently streamed bot message.
 
+Could this simplified by batching everything? Absolutely! But then our end result wouldn't be so awesome. 😎 
 
 ## Project Setup
 
@@ -41,17 +46,18 @@ cd chatbot
 npm install
 touch .env.local
 ```
+Mantine is a UI-component library that will allow us to get leverage some UI boilerplate. You can use any library you want! Now, let's add the logic!
 
 Make sure to add these environment variables to your .env.local:
 
 ```text
 OPENAI_API_KEY=
 ELEVENLABS_API_KEY=
+#ELEVENLABS_VOICE_ID=
 ```
+If you want to use your own voice, simply remove the comment (hashtag) and add your voice id!
 
-Mantine is a UI-component library that will allow us to get leverage some UI boilerplate. 
 
-You can use any library you want! Now, let's add the logic!
 
 ## Step 1: Create the Chatbot Component
 
@@ -163,10 +169,34 @@ Create `pages/index.tsx` and the following:
 - **Layout**: Uses Mantine's `Container` for consistent layout. This ensures a clean and responsive design.
 - **Component Inclusion**: Includes the `Chatbot` component. This makes the chatbot available on the home page.
 
-## Conclusion
+## Running the project and deploying
+
+To run the project locally, run: 
+
+```bash
+npm run dev
+```
+
+Then, go to localhost:3000.
+
+To deploy the project, I recommend you give Vercel access to your project, provide the three environment variables, and hit deploy!
+You might need to set the install command to `npm i`.
+
+You can find detailed instructions for this [here](https://nextjs.org/learn-pages-router/basics/deploying-nextjs-app/deploy).
+
+---
 
 Congratulations! You've built a sophisticated chatbot that responds in real-time, speaks the responses, and highlights the words being spoken. This project showcases the power of Next.js, Mantine, OpenAI, and ElevenLabs, providing a rich, interactive user experience.
 
 Deploy your project to Vercel or any other platform that supports serverless functions to make your chatbot accessible to the world!
 
 Happy coding!
+
+
+## The whole code, and contributing
+
+If you'd like, feel free to fork the [repo for this project](https://github.com/valdrox/chat-streamer), and deploy it on vercel! 
+All you need is to give Vercel access to your project, provide the three environment variables, and hit deploy!
+You can find instructions for this [here](https://nextjs.org/learn-pages-router/basics/deploying-nextjs-app/deploy).
+
+I also welcome any contributions, particularly UI focused! ;)
