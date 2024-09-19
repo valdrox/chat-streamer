@@ -6,6 +6,10 @@ export default function Document() {
     <Html lang="en">
       <Head>
         <ColorSchemeScript />
+        <link
+          rel="stylesheet"
+          href="https://unpkg.com/dracula-prism/dist/css/dracula-prism.css"
+        ></link>
       </Head>
       <body>
         <Main />
