@@ -1,14 +1,10 @@
 # Build a Chatbot that Speaks Real-Time with Any Voice
 
-In this tutorial, you'll learn how to build a ChatGPT-like chatbot that not only responds to user queries in real-time but also speaks the responses using a customizable voice.
-You can even use your voice!
-The chatbot will highlight the words it is currently speaking, providing an immersive and interactive experience.
-We'll use Next.js with server-sent events (SSE) for low-latency communication, and Mantine for UI components.
-By using server-sent events, we can keep deployment quick and easy thanks the serverless architecture.
+In this tutorial, you'll learn how to build a ChatGPT-like chatbot that not only responds to user queries in real-time but also speaks the responses using a customizable voice. You can even use your voice! The chatbot will highlight the words it is currently speaking, providing an immersive and interactive experience. We'll use Next.js with server-sent events (SSE) for low-latency communication, and Mantine for UI components. By using server-sent events, we can keep deployment quick and easy thanks to the serverless architecture.
 
 <img
   src="/screenshot.png"
-  alt="screenshot"
+  alt="Chatbot that speaks real-time screenshot"
   style={{
     display: 'block',
     margin: '0 auto',
@@ -28,28 +24,26 @@ Before we start, ensure you have the following:
 - API keys for OpenAI and ElevenLabs
 - A voice id from ElevenLabs (if you want to try a particular voice)
 
-## Overview of the data
+## Overview of the Data Flow
 
-There's a lot of streaming involved in this project to keep everything low-latency.
-It may seem a bit complicated, but in practice there's only two streams that matter, text and audio.
-Follow where each is going individually will help you understand the logic better.
+There's a lot of streaming involved in this project to keep everything low-latency. It may seem a bit complicated, but in practice, there's only two streams that matter, text and audio. Following where each is going individually will help you understand the logic better.
 
-Here's a quick overview of all that's going on!
+Here's a quick overview of all that's going on:
 
-1. When a new user message comes in, we send it to OpenAI to get a streamed text response, via a sent-sent event.
-2. We pipe that into ElevenLabs text-to-speech WebSocket API, AND send it back to the front-end via a server-side-event.
-3. Whenever the ElevenLabs WebSocket sends audio chunks, we also send to the front-end via server-side-events.
-4. In the front-end, whenever we recieve text chunks from OpenAI, we display them in the last bot message.
-5. In the front-end, whenever we recieve audio chunks from OpenAI, pipe them to an audio playing service.
-6. The audio playing service adds chunks to its buffer, and also captures text-audio alignment information provided in the audio chunks
+1. When a new user message comes in, we send it to OpenAI to get a streamed text response, via a server-sent event.
+2. We pipe that into ElevenLabs text-to-speech WebSocket API, AND send it back to the front-end via a server-side event.
+3. Whenever the ElevenLabs WebSocket sends audio chunks, we also send them to the front-end via server-side events.
+4. In the front-end, whenever we receive text chunks from OpenAI, we display them in the last bot message.
+5. In the front-end, whenever we receive audio chunks from OpenAI, we pipe them to an audio playing service.
+6. The audio playing service adds chunks to its buffer and also captures text-audio alignment information provided in the audio chunks.
 7. While the audio playing service plays from its buffer, it also emits events that indicate what text is currently being read.
-8. The react component highlights the word in the currently streamed bot message.
+8. The React component highlights the word in the currently streamed bot message.
 
-Could this simplified by batching everything? Absolutely! But then our end result wouldn't be so awesome. 😎
+Could this be simplified by batching everything? Absolutely! But then our end result wouldn't be so awesome. 😎
 
 ## Project Setup
 
-First, let's bootstrap up our Next.js project with Mantine:
+First, let's bootstrap our Next.js project with Mantine:
 
 ```bash
 npx create-next-app@latest --example with-mantine chatbot
@@ -58,7 +52,7 @@ npm install
 touch .env.local
 ```
 
-Mantine is a UI-component library that will allow us to get leverage some UI boilerplate. You can use any library you want! Now, let's add the logic!
+Mantine is a UI-component library that will allow us to leverage some UI boilerplate. You can use any library you want! Now, let's add the logic!
 
 Make sure to add these environment variables to your .env.local:
 
@@ -74,7 +68,7 @@ If you want to use your own voice, simply remove the comment (hashtag) and add y
 
 The `Chatbot` component handles user input and displays messages. This is the core of our frontend logic.
 
-Create `components/Chatbot.tsx` and the following:
+Create `components/Chatbot.tsx` and add the following:
 
 ```typescript
 // components/Chatbot.tsx
@@ -91,7 +85,7 @@ Create `components/Chatbot.tsx` and the following:
 
 The `Message` component is responsible for displaying individual messages. It handles the formatting and highlights the spoken words.
 
-Create `components/Message.tsx` and the following:
+Create `components/Message.tsx` and add the following:
 
 ```typescript
 // components/Message.tsx
@@ -107,7 +101,7 @@ Create `components/Message.tsx` and the following:
 
 The `useChatbot` custom hook manages the chatbot's state and handles communication with the server. This encapsulates the logic for maintaining the chat state and interacting with the backend.
 
-Create `hooks/useChatbot.ts` and the following:
+Create `hooks/useChatbot.ts` and add the following:
 
 ```typescript
 // hooks/useChatbot.ts
@@ -123,7 +117,7 @@ Create `hooks/useChatbot.ts` and the following:
 
 The API route handles incoming chat messages and communicates with OpenAI and ElevenLabs. This is where the backend logic resides.
 
-Create `pages/api/chat.ts` and the following:
+Create `pages/api/chat.ts` and add the following:
 
 ```typescript
 // pages/api/chat.ts
@@ -136,7 +130,7 @@ Create `pages/api/chat.ts` and the following:
 - **WebSocket Connection**: Connects to ElevenLabs for real-time speech synthesis. This allows us to convert text to speech in real-time.
 - **OpenAI Streaming**: Streams responses from OpenAI and sends them to ElevenLabs and the client. This ensures low-latency communication.
 
-### Using your own voice
+### Using Your Own Voice
 
 If you'd like to use your own voice, simply create one in ElevenLabs, go to `Voices`, select your voice, then click the `ID` button to copy its id. Paste it in the code above.
 
@@ -144,7 +138,7 @@ If you'd like to use your own voice, simply create one in ElevenLabs, go to `Voi
 
 The `Base64AudioPlayer` class handles audio playback from Base64 encoded strings. This is essential for playing the audio received from ElevenLabs.
 
-Create `pages/classes/Base64AudioPlayer.ts` and the following:
+Create `pages/classes/Base64AudioPlayer.ts` and add the following:
 
 ```typescript
 // pages/classes/Base64AudioPlayer.ts
@@ -160,7 +154,7 @@ Create `pages/classes/Base64AudioPlayer.ts` and the following:
 
 The `ReadingIndex` class manages the alignment of text and audio for highlighting. This ensures that the correct words are highlighted as they are spoken.
 
-Create `pages/classes/ReadingIndex.ts` and the following:
+Create `pages/classes/ReadingIndex.ts` and add the following:
 
 ```typescript
 // pages/classes/ReadingIndex.ts
@@ -176,7 +170,7 @@ Create `pages/classes/ReadingIndex.ts` and the following:
 
 Finally, integrate the `Chatbot` component in your home page. This brings everything together and makes the chatbot accessible to the user.
 
-Create `pages/index.tsx` and the following:
+Create `pages/index.tsx` and add the following:
 
 ```typescript
 // pages/index.tsx
@@ -188,7 +182,7 @@ Create `pages/index.tsx` and the following:
 - **Layout**: Uses Mantine's `Container` for consistent layout. This ensures a clean and responsive design.
 - **Component Inclusion**: Includes the `Chatbot` component. This makes the chatbot available on the home page.
 
-## Running the project and deploying
+## Running the Project and Deploying it
 
 To run the project locally, run:
 
@@ -198,8 +192,7 @@ npm run dev
 
 Then, go to localhost:3000.
 
-To deploy the project, I recommend you give Vercel access to your project, provide the three environment variables, and hit deploy!
-You might need to set the install command to `npm i`.
+To deploy the project, I recommend you give Vercel access to your project, provide the three environment variables, and hit deploy! You might need to set the install command to `npm i`.
 
 You can find detailed instructions for this [here](https://nextjs.org/learn-pages-router/basics/deploying-nextjs-app/deploy).
 
@@ -211,10 +204,8 @@ Deploy your project to Vercel or any other platform that supports serverless fun
 
 Happy coding!
 
-## The whole code, and contributing
+## The Full Code, and Contributing
 
-If you'd like, feel free to fork the [repo for this project](https://github.com/valdrox/chat-streamer), and deploy it on vercel!
-All you need is to give Vercel access to your project, provide the three environment variables, and hit deploy!
-You can find instructions for this [here](https://nextjs.org/learn-pages-router/basics/deploying-nextjs-app/deploy).
+If you'd like, feel free to fork the [repo for this project](https://github.com/valdrox/chat-streamer), and deploy it on Vercel! All you need is to give Vercel access to your project, provide the three environment variables, configure install as `npm i` and hit deploy! You can find instructions for this [here](https://nextjs.org/learn-pages-router/basics/deploying-nextjs-app/deploy).
 
-I also welcome any contributions, particularly UI focused! ;)
+I also welcome any contributions, particularly UI focused! 😉
