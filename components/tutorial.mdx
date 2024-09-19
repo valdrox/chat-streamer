@@ -26,17 +26,17 @@ Before we start, ensure you have the following:
 
 ## Overview of the Data Flow
 
-There's a lot of streaming involved in this project to keep everything low-latency. It may seem a bit complicated, but in practice, there's only two streams that matter, text and audio. Following where each is going individually will help you understand the logic better.
+There's a lot of streaming involved in this project to keep everything low-latency. It may seem a bit complicated, but in practice, there's only two streams that matter: text and audio. Following where each is going individually will help you understand the logic better.
 
 Here's a quick overview of all that's going on:
 
-1. When a new user message comes in, we send it to OpenAI to get a streamed text response, via a server-sent event.
-2. We pipe that into ElevenLabs text-to-speech WebSocket API, AND send it back to the front-end via a server-side event.
+1. When a new user message comes in, we send it to OpenAI to get a streamed text response via a server-sent event.
+2. We pipe that text response into ElevenLabs' text-to-speech WebSocket API and also send it back to the front-end via a server-sent event.
 3. Whenever the ElevenLabs WebSocket sends audio chunks, we also send them to the front-end via server-side events.
 4. In the front-end, whenever we receive text chunks from OpenAI, we display them in the last bot message.
-5. In the front-end, whenever we receive audio chunks from OpenAI, we pipe them to an audio playing service.
-6. The audio playing service adds chunks to its buffer and also captures text-audio alignment information provided in the audio chunks.
-7. While the audio playing service plays from its buffer, it also emits events that indicate what text is currently being read.
+5. In the front-end, whenever we receive audio chunks from ElevenLabs, we pipe them to an audio playing service.
+6. The audio playing service adds chunks to its buffer and captures text-audio alignment information provided in the audio chunks.
+7. While the audio playing service plays from its buffer, it emits events indicating what text is currently being read.
 8. The React component highlights the word in the currently streamed bot message.
 
 Could this be simplified by batching everything? Absolutely! But then our end result wouldn't be so awesome. 😎
@@ -153,14 +153,13 @@ const Chatbot = () => {
 };
 
 export default Chatbot;
-
 ```
 
 ### Explanation
 
-- **State Management**: We use `useState` to manage user input and messages. This helps us keep track of what the user has typed and what messages have been exchanged.
-- **Scroll Handling**: `useRef` and `useEffect` ensure the chat scrolls to the latest message. This provides a smooth user experience by automatically scrolling to the newest message.
-- **Event Source**: The `startListening` function initializes an EventSource to listen for server-sent events from the backend. This allows us to receive real-time updates from the server.
+- **State Management**: Here, we use `useState` to manage user input and messages. This helps us keep track of what the user has typed and what messages have been exchanged.
+- **Scroll Handling**: We ensure that the chat scrolls to the latest message using `useRef` and `useEffect`. This provides a smooth user experience by automatically scrolling to the newest message.
+- **Event Source**: The `startListening` function initializes an EventSource to listen for server-sent events from the backend. This allows us to receive real-time updates from the server, keeping our text stream flowing smoothly!
 
 ## Step 2: Create the Message Component
 
@@ -221,13 +220,12 @@ const Message = ({ content, role, isLast, startIndex, endIndex }: MessageProps) 
 };
 
 export default Message;
-
 ```
 
 ### Explanation
 
-- **Conditional Rendering**: The `renderContent` function highlights text only for the last message. This ensures that only the currently spoken words are highlighted.
-- **Styling**: Mantine's `Card` component is used for consistent styling. This helps in maintaining a clean and uniform look for the chat messages.
+- **Conditional Rendering**: The `renderContent` function highlights text only for the last message. This ensures that only the currently spoken words are highlighted, giving users visual feedback on what the chatbot is saying.
+- **Styling**: We use Mantine's `Card` component for consistent styling, ensuring a clean and uniform look for the chat messages. This makes our text stream visually appealing!
 
 ## Step 3: Implement the Custom Hook
 
@@ -329,13 +327,12 @@ const useChatbot = () => {
 };
 
 export default useChatbot;
-
 ```
 
 ### Explanation
 
-- **State Management**: Manages messages, EventSource, and audio playback. This keeps our component clean and focused on rendering.
-- **Event Handling**: Processes incoming messages and audio chunks from the server. This allows us to handle real-time updates efficiently.
+- **State Management**: This hook manages messages, EventSource, and audio playback, keeping our component clean and focused on rendering. It allows us to efficiently handle both text and audio streams.
+- **Event Handling**: The hook processes incoming messages and audio chunks from the server. This allows us to handle real-time updates efficiently, ensuring that both our text and audio streams are in sync!
 
 ## Step 4: Create the API Route
 
@@ -499,14 +496,13 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     res.status(500).json({ error: 'An error occurred' });
   }
 }
-
 ```
 
 ### Explanation
 
-- **SSE Headers**: Sets headers for server-sent events. This ensures the client can receive real-time updates.
-- **WebSocket Connection**: Connects to ElevenLabs for real-time speech synthesis. This allows us to convert text to speech in real-time.
-- **OpenAI Streaming**: Streams responses from OpenAI and sends them to ElevenLabs and the client. This ensures low-latency communication.
+- **SSE Headers**: We set headers for server-sent events to ensure the client can receive real-time updates. This is crucial for keeping our text stream flowing.
+- **WebSocket Connection**: We connect to ElevenLabs for real-time speech synthesis, allowing us to convert text to speech in real-time. This is where our audio stream starts!
+- **OpenAI Streaming**: We stream responses from OpenAI and send them to ElevenLabs and the client. This ensures low-latency communication, keeping both our text and audio streams synchronized!
 
 ### Using Your Own Voice
 
@@ -614,13 +610,12 @@ export class Base64AudioPlayer {
     return bytes.buffer;
   }
 }
-
 ```
 
 ### Explanation
 
-- **AudioContext**: Uses Web Audio API for audio playback. This provides a robust way to handle audio in the browser.
-- **Queue Management**: Manages a queue of audio chunks to ensure smooth playback. This ensures that the audio plays seamlessly.
+- **AudioContext**: We use the Web Audio API for audio playback, which provides a robust way to handle audio in the browser. This is where our audio stream gets played!
+- **Queue Management**: This class manages a queue of audio chunks to ensure smooth playback. By adding chunks to the queue, we ensure that the audio plays seamlessly, maintaining a good user experience.
 
 ## Step 6: Create the Reading Index Class
 
@@ -739,13 +734,12 @@ export class ReadingIndex {
     }
   }
 }
-
 ```
 
 ### Explanation
 
-- **Alignment Management**: Keeps track of the start and end times of each character in the audio. This ensures accurate highlighting.
-- **Callback Handling**: Calls a callback function to highlight the current word being spoken. This provides real-time feedback to the user.
+- **Alignment Management**: This class keeps track of the start and end times of each character in the audio, ensuring accurate highlighting. This is essential for syncing our text and audio streams!
+- **Callback Handling**: The class calls a callback function to highlight the current word being spoken, providing real-time feedback to the user. This enhances the interactivity of our chatbot!
 
 ## Step 7: Integrate Components in the Home Page
 
@@ -771,13 +765,12 @@ const Home = () => {
 };
 
 export default Home;
-
 ```
 
 ### Explanation
 
-- **Layout**: Uses Mantine's `Container` for consistent layout. This ensures a clean and responsive design.
-- **Component Inclusion**: Includes the `Chatbot` component. This makes the chatbot available on the home page.
+- **Layout**: We use Mantine's `Container` for consistent layout, ensuring a clean and responsive design. This makes our chatbot look great on any device!
+- **Component Inclusion**: By including the `Chatbot` component, we make the chatbot available on the home page, allowing users to interact with it right away.
 
 ## Running the Project and Deploying it
 
