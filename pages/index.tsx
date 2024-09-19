@@ -30,7 +30,7 @@ const Home = () => {
       <main>
         <Container>
           <Tutorial />
-          <div id="demo">
+          <div id="demo" style={{ marginTop: 30 }}>
             <Chatbot />
           </div>
         </Container>
