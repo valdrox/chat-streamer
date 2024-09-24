@@ -72,11 +72,11 @@ Create `components/Chatbot.tsx` and add the following:
 
 ```typescript
 // components/Chatbot.tsx
-import { useEffect, useRef, useState } from 'react';
+import { useState } from 'react';
 import {
   Box,
   Button,
-  Container,
+  Card,
   ScrollArea,
   Stack,
   Text,
@@ -102,7 +102,7 @@ const Chatbot = () => {
   };
 
   return (
-    <Container
+    <Card
       style={{
         minHeight: 400,
         overflow: 'hidden',
@@ -114,14 +114,10 @@ const Chatbot = () => {
       }}
     >
       <ScrollArea style={{ flex: 1, padding: theme.spacing.md, overflow: 'auto' }}>
-        <Text
-          ta="center"
-          fw={700}
-          style={{ fontSize: '1.5rem', marginBottom: theme.spacing.md }}
-        >
+        <Text ta="center" fw={500} size="lg">
           Your-Voice-Enabled Chatbot
         </Text>
-        <Stack gap="md">
+        <Stack gap="md" mt="xl">
           {messages.map((msg, index) => (
             <Message
               key={index}
@@ -146,9 +142,9 @@ const Chatbot = () => {
             }
           }}
         />
-        <Button onClick={handleSend}>Send</Button>
+        <Button onClick={handleSend} variant="default" color="gray">Send</Button>
       </Box>
-    </Container>
+    </Card>
   );
 };
 
@@ -158,8 +154,8 @@ export default Chatbot;
 ### Explanation
 
 - **State Management**: Here, we use `useState` to manage user input and messages. This helps us keep track of what the user has typed and what messages have been exchanged.
-- **Scroll Handling**: We ensure that the chat scrolls to the latest message using `useRef` and `useEffect`. This provides a smooth user experience by automatically scrolling to the newest message.
 - **Event Source**: The `startListening` function initializes an EventSource to listen for server-sent events from the backend. This allows us to receive real-time updates from the server, keeping our text stream flowing smoothly.
+- **React Components**: The text input and messages components are what the users see and interact with. We keep the logic for messages in their own file for clarity.
 
 ## Step 2: Create the Message Component
 
@@ -169,7 +165,8 @@ Create `components/Message.tsx` and add the following:
 
 ```typescript
 // components/Message.tsx
-import { Card, Text, useMantineTheme } from '@mantine/core';
+import { IconRobotFace } from '@tabler/icons-react';
+import { Group, Mark, rem, Text } from '@mantine/core';
 
 interface MessageProps {
   content: string;
@@ -180,42 +177,41 @@ interface MessageProps {
 }
 
 const Message = ({ content, role, isLast, startIndex, endIndex }: MessageProps) => {
-  const theme = useMantineTheme();
 
   // Conditionally handle highlighted text only for the last message
   const renderContent = () => {
     if (isLast && startIndex !== null && endIndex !== null) {
       return (
-        <Text span color={role === 'user' ? theme.colors.blue[7] : theme.colors.teal[7]}>
+        <Text span >
           <Text span>{content.slice(0, startIndex)}</Text>
-          <Text span color={theme.colors.red[7]}>{content.slice(startIndex, endIndex)}</Text>
+          <Mark color="grape">{content.slice(startIndex, endIndex)}</Mark>
           <Text span>{content.slice(endIndex)}</Text>
         </Text>
       );
     }
-    
+
     // Render normal content for non-last messages or when indices are not defined
     return (
-      <Text color={role === 'user' ? theme.colors.blue[7] : theme.colors.teal[7]}>
-        {content}
-      </Text>
+      <Text >{content}</Text>
     );
   };
 
   return (
-    <Card
-      shadow="sm"
-      padding="sm"
-      radius="md"
+    <Group
+      justify={role === 'user' ? 'flex-end' : 'flex-start'}
+      align="start"
       style={{
-        alignSelf: role === 'user' ? 'flex-end' : 'flex-start',
-        backgroundColor: role === 'user' ? theme.colors.blue[0] : theme.colors.teal[0],
-        maxWidth: '80%',
         whiteSpace: 'pre-wrap',
       }}
+
     >
+      {role === 'assistant' && (
+        <IconRobotFace
+          style={{ width: rem(24), height: rem(24) }}
+        />
+      )}
       {renderContent()}
-    </Card>
+    </Group>
   );
 };
 
@@ -225,7 +221,7 @@ export default Message;
 ### Explanation
 
 - **Conditional Rendering**: The `renderContent` function highlights text only for the last message. This ensures that only the currently spoken words are highlighted, giving users visual feedback on what the chatbot is saying.
-- **Styling**: We use Mantine's `Card` component for consistent styling, ensuring a clean and uniform look for the chat messages. This makes our text stream visually appealing.
+- **Styling**: We use Mantine's `Group` component to align content horizontally and an icon at the top left, mimicing ChatGPT. This makes our text stream visually appealing and make the user feel at home.
 
 ## Step 3: Implement the Custom Hook
 

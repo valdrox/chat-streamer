@@ -1,8 +1,8 @@
-import { useEffect, useRef, useState } from 'react';
+import { useState } from 'react';
 import {
   Box,
   Button,
-  Container,
+  Card,
   ScrollArea,
   Stack,
   Text,
@@ -28,7 +28,7 @@ const Chatbot = () => {
   };
 
   return (
-    <Container
+    <Card
       style={{
         minHeight: 400,
         overflow: 'hidden',
@@ -40,14 +40,10 @@ const Chatbot = () => {
       }}
     >
       <ScrollArea style={{ flex: 1, padding: theme.spacing.md, overflow: 'auto' }}>
-        <Text
-          ta="center"
-          fw={700}
-          style={{ fontSize: '1.5rem', marginBottom: theme.spacing.md }}
-        >
+        <Text ta="center" fw={500} size="lg">
           Your-Voice-Enabled Chatbot
         </Text>
-        <Stack gap="md">
+        <Stack gap="md" mt="xl">
           {messages.map((msg, index) => (
             <Message
               key={index}
@@ -72,9 +68,9 @@ const Chatbot = () => {
             }
           }}
         />
-        <Button onClick={handleSend}>Send</Button>
+        <Button onClick={handleSend} variant="default" color="gray">Send</Button>
       </Box>
-    </Container>
+    </Card>
   );
 };
 
