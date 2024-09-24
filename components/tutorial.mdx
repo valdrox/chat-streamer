@@ -14,7 +14,7 @@ In this tutorial, you'll learn how to build a ChatGPT-like chatbot that not only
   }}
 />
 
-Want to see it in action? Jump to the [demo](#demo), or follow this tutorial to build this yourself!
+Want to see it in action? Jump to the [demo](#demo), or follow this tutorial to build this yourself.
 
 ## Prerequisites
 
@@ -52,7 +52,7 @@ npm install
 touch .env.local
 ```
 
-Mantine is a UI-component library that will allow us to leverage some UI boilerplate. You can use any library you want! Now, let's add the logic!
+Mantine is a UI-component library that will allow us to leverage some UI boilerplate. You can use any library you want. Now, let's add the logic.
 
 Make sure to add these environment variables to your .env.local:
 
@@ -62,7 +62,7 @@ ELEVENLABS_API_KEY=
 #ELEVENLABS_VOICE_ID=
 ```
 
-If you want to use your own voice, simply remove the comment (hashtag) and add your voice id!
+If you want to use your own voice, simply remove the comment (hashtag) and add your voice id.
 
 ## Step 1: Create the Chatbot Component
 
@@ -159,7 +159,7 @@ export default Chatbot;
 
 - **State Management**: Here, we use `useState` to manage user input and messages. This helps us keep track of what the user has typed and what messages have been exchanged.
 - **Scroll Handling**: We ensure that the chat scrolls to the latest message using `useRef` and `useEffect`. This provides a smooth user experience by automatically scrolling to the newest message.
-- **Event Source**: The `startListening` function initializes an EventSource to listen for server-sent events from the backend. This allows us to receive real-time updates from the server, keeping our text stream flowing smoothly!
+- **Event Source**: The `startListening` function initializes an EventSource to listen for server-sent events from the backend. This allows us to receive real-time updates from the server, keeping our text stream flowing smoothly.
 
 ## Step 2: Create the Message Component
 
@@ -225,7 +225,7 @@ export default Message;
 ### Explanation
 
 - **Conditional Rendering**: The `renderContent` function highlights text only for the last message. This ensures that only the currently spoken words are highlighted, giving users visual feedback on what the chatbot is saying.
-- **Styling**: We use Mantine's `Card` component for consistent styling, ensuring a clean and uniform look for the chat messages. This makes our text stream visually appealing!
+- **Styling**: We use Mantine's `Card` component for consistent styling, ensuring a clean and uniform look for the chat messages. This makes our text stream visually appealing.
 
 ## Step 3: Implement the Custom Hook
 
@@ -332,7 +332,7 @@ export default useChatbot;
 ### Explanation
 
 - **State Management**: This hook manages messages, EventSource, and audio playback, keeping our component clean and focused on rendering. It allows us to efficiently handle both text and audio streams.
-- **Event Handling**: The hook processes incoming messages and audio chunks from the server. This allows us to handle real-time updates efficiently, ensuring that both our text and audio streams are in sync!
+- **Event Handling**: The hook processes incoming messages and audio chunks from the server. This allows us to handle real-time updates efficiently, ensuring that both our text and audio streams are in sync.
 
 ## Step 4: Create the API Route
 
@@ -501,8 +501,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 ### Explanation
 
 - **SSE Headers**: We set headers for server-sent events to ensure the client can receive real-time updates. This is crucial for keeping our text stream flowing.
-- **WebSocket Connection**: We connect to ElevenLabs for real-time speech synthesis, allowing us to convert text to speech in real-time. This is where our audio stream starts!
-- **OpenAI Streaming**: We stream responses from OpenAI and send them to ElevenLabs and the client. This ensures low-latency communication, keeping both our text and audio streams synchronized!
+- **WebSocket Connection**: We connect to ElevenLabs for real-time speech synthesis, allowing us to convert text to speech in real-time. This is where our audio stream starts.
+- **OpenAI Streaming**: We stream responses from OpenAI and send them to ElevenLabs and the client. This ensures low-latency communication, keeping both our text and audio streams synchronized.
 
 ### Using Your Own Voice
 
@@ -614,7 +614,7 @@ export class Base64AudioPlayer {
 
 ### Explanation
 
-- **AudioContext**: We use the Web Audio API for audio playback, which provides a robust way to handle audio in the browser. This is where our audio stream gets played!
+- **AudioContext**: We use the Web Audio API for audio playback, which provides a robust way to handle audio in the browser. This is where our audio stream gets played.
 - **Queue Management**: This class manages a queue of audio chunks to ensure smooth playback. By adding chunks to the queue, we ensure that the audio plays seamlessly, maintaining a good user experience.
 
 ## Step 6: Create the Reading Index Class
@@ -738,8 +738,8 @@ export class ReadingIndex {
 
 ### Explanation
 
-- **Alignment Management**: This class keeps track of the start and end times of each character in the audio, ensuring accurate highlighting. This is essential for syncing our text and audio streams!
-- **Callback Handling**: The class calls a callback function to highlight the current word being spoken, providing real-time feedback to the user. This enhances the interactivity of our chatbot!
+- **Alignment Management**: This class keeps track of the start and end times of each character in the audio, ensuring accurate highlighting. This is essential for syncing our text and audio streams.
+- **Callback Handling**: The class calls a callback function to highlight the current word being spoken, providing real-time feedback to the user. This enhances the interactivity of our chatbot.
 
 ## Step 7: Integrate Components in the Home Page
 
@@ -769,7 +769,7 @@ export default Home;
 
 ### Explanation
 
-- **Layout**: We use Mantine's `Container` for consistent layout, ensuring a clean and responsive design. This makes our chatbot look great on any device!
+- **Layout**: We use Mantine's `Container` for consistent layout, ensuring a clean and responsive design. This makes our chatbot look great on any device.
 - **Component Inclusion**: By including the `Chatbot` component, we make the chatbot available on the home page, allowing users to interact with it right away.
 
 ## Running the Project and Deploying it
@@ -782,20 +782,20 @@ npm run dev
 
 Then, go to localhost:3000.
 
-To deploy the project, I recommend you give Vercel access to your project, provide the three environment variables, and hit deploy! You might need to set the install command to `npm i`.
+To deploy the project, I recommend you give Vercel access to your project, provide the three environment variables, and hit deploy. You might need to set the install command to `npm i`.
 
 You can find detailed instructions for this [here](https://nextjs.org/learn-pages-router/basics/deploying-nextjs-app/deploy).
 
 ---
 
-Congratulations! You've built a sophisticated chatbot that responds in real-time, speaks the responses, and highlights the words being spoken. This project showcases the power of Next.js, Mantine, OpenAI, and ElevenLabs, providing a rich, interactive user experience.
+Congratulations. You've built a sophisticated chatbot that responds in real-time, speaks the responses, and highlights the words being spoken. This project showcases the power of Next.js, Mantine, OpenAI, and ElevenLabs, providing a rich, interactive user experience.
 
-Deploy your project to Vercel or any other platform that supports serverless functions to make your chatbot accessible to the world!
+Deploy your project to Vercel or any other platform that supports serverless functions to make your chatbot accessible to the world.
 
-Happy coding!
+Happy coding.
 
 ## The Full Code, and Contributing
 
-If you'd like, feel free to fork the [repo for this project](https://github.com/valdrox/chat-streamer), and deploy it on Vercel! All you need is to give Vercel access to your project, provide the three environment variables, configure install as `npm i` and hit deploy! You can find instructions for this [here](https://nextjs.org/learn-pages-router/basics/deploying-nextjs-app/deploy).
+If you'd like, feel free to fork the [repo for this project](https://github.com/valdrox/chat-streamer), and deploy it on Vercel! All you need is to give Vercel access to your project, provide the three environment variables, configure install as `npm i` and hit deploy. You can find instructions for this [here](https://nextjs.org/learn-pages-router/basics/deploying-nextjs-app/deploy).
 
-I also welcome any contributions, particularly UI focused! 😉
+I also welcome any contributions, particularly UI focused. 😉
